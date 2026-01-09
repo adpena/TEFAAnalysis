@@ -3,6 +3,7 @@ import argparse
 import csv
 import json
 import os
+import re
 import shutil
 import sys
 import urllib.parse
@@ -173,6 +174,29 @@ def enrich_vendors(vendor_rows, esc_index, county_index, district_index):
             missing["district"] += 1
             district_props = {}
 
+        street = row.get("address_street") or ""
+        city = row.get("address_city") or ""
+        state = row.get("address_state") or ""
+        zipcode = row.get("address_zipcode") or ""
+        address_parts = [part for part in [street, city, state, zipcode] if part]
+        enriched["address_formatted"] = ", ".join(address_parts)
+        if city and state and zipcode:
+            enriched["address_city_state_zip"] = f"{city}, {state} {zipcode}"
+        else:
+            enriched["address_city_state_zip"] = " ".join(
+                part for part in [city, state, zipcode] if part
+            )
+
+        website = (row.get("contact_website") or "").strip()
+        enriched["contact_website_display"] = (
+            website.replace("https://", "").replace("http://", "").strip("/")
+        )
+        phone = (row.get("contact_phone") or "").strip()
+        enriched["contact_phone_display"] = phone
+        enriched["contact_phone_digits"] = "".join(ch for ch in phone if ch.isdigit())
+        email = (row.get("contact_email") or "").strip()
+        enriched["contact_email_lower"] = email.lower()
+
         enriched["tea_esc_region"] = esc_props.get("ESC_REGION", "")
         enriched["tea_esc_city"] = esc_props.get("CITY", "")
         enriched["tea_esc_website"] = esc_props.get("WEBSITE", "")
@@ -198,9 +222,15 @@ def add_sheet_from_rows(workbook, title, fieldnames, rows):
     format_worksheet_as_table(worksheet, table_name=f"{title}_table")
 
 
+def populate_sheet(worksheet, fieldnames, rows, table_name):
+    worksheet.append(fieldnames)
+    for row in rows:
+        worksheet.append([row.get(field, "") for field in fieldnames])
+    format_worksheet_as_table(worksheet, table_name=table_name)
+
+
 def add_overview_sheet(workbook, metadata_rows, summary_rows):
-    worksheet = workbook.active
-    worksheet.title = "Overview"
+    worksheet = workbook.create_sheet(title="Overview")
     worksheet.append(["Key", "Value"])
     for row in metadata_rows + summary_rows:
         worksheet.append([row["key"], row["value"]])
@@ -210,6 +240,28 @@ def add_overview_sheet(workbook, metadata_rows, summary_rows):
     title_cell.alignment = Alignment(horizontal="center")
 
     format_worksheet_as_table(worksheet, table_name="Overview_table")
+
+
+def update_docs_index(path, record_count, retrieved_at):
+    if not os.path.exists(path):
+        return False
+    try:
+        timestamp = datetime.fromisoformat(retrieved_at)
+        date_str = timestamp.date().isoformat()
+    except (TypeError, ValueError):
+        date_str = datetime.now(timezone.utc).date().isoformat()
+
+    replacement = f"Last updated: {date_str} ({record_count} schools)"
+    with open(path, "r", encoding="utf-8") as handle:
+        content = handle.read()
+
+    updated, count = re.subn(r"Last updated: [^<]*", replacement, content, count=1)
+    if count == 0:
+        return False
+
+    with open(path, "w", encoding="utf-8") as handle:
+        handle.write(updated)
+    return True
 
 
 def main():
@@ -262,6 +314,12 @@ def main():
         vendors_rows, esc_index, county_index, district_index
     )
     enriched_fields = list(vendors_fields) + [
+        "address_formatted",
+        "address_city_state_zip",
+        "contact_website_display",
+        "contact_phone_display",
+        "contact_phone_digits",
+        "contact_email_lower",
         "tea_esc_region",
         "tea_esc_city",
         "tea_esc_website",
@@ -274,9 +332,6 @@ def main():
         "tea_school_district_nces",
         "tea_school_district_geoid20",
     ]
-
-    enriched_csv_path = os.path.join(input_dir, "tx_vendors_enriched.csv")
-    write_csv(enriched_csv_path, enriched_fields, enriched_rows)
 
     metadata_fields, metadata_rows = read_csv(
         os.path.join(input_dir, "tx_dataset_metadata.csv")
@@ -294,10 +349,80 @@ def main():
         for key in sorted(metadata_keyed.keys())
     ]
 
-    workbook = Workbook()
-    add_overview_sheet(workbook, overview_rows, summary_rows)
+    preferred_vendor_order = [
+        "id",
+        "name",
+        "address_formatted",
+        "address_city_state_zip",
+        "address_street",
+        "address_city",
+        "address_state",
+        "address_zipcode",
+        "contact_phone",
+        "contact_phone_display",
+        "contact_phone_digits",
+        "contact_email",
+        "contact_email_lower",
+        "contact_website",
+        "contact_website_display",
+        "tea_school_district_name",
+        "tea_school_district_name20",
+        "tea_school_district_number",
+        "tea_school_district_nces",
+        "tea_school_district_geoid20",
+        "tea_county_name",
+        "tea_county_fips",
+        "tea_county_cntyfips",
+        "tea_esc_region",
+        "tea_esc_city",
+        "tea_esc_website",
+        "address_county",
+        "address_region",
+        "location_lat",
+        "location_lng",
+        "vendorType",
+        "vendorTypes",
+        "type",
+        "displayGradeRange",
+        "minGrade",
+        "maxGrade",
+        "isPreK",
+        "isElementary",
+        "isMiddle",
+        "isHigh",
+        "costOptions",
+        "description",
+        "serviceType",
+        "subjectsTaught",
+        "pricingModel",
+        "price",
+        "pricingNotes",
+        "isProductionReady",
+        "curricularClassification",
+        "bonusTagsRaw",
+    ]
 
-    add_sheet_from_rows(workbook, "Vendors", enriched_fields, enriched_rows)
+    vendor_field_set = set(enriched_fields)
+    ordered_vendor_fields = [
+        field for field in preferred_vendor_order if field in vendor_field_set
+    ]
+    ordered_vendor_fields += [
+        field for field in enriched_fields if field not in ordered_vendor_fields
+    ]
+
+    enriched_csv_path = os.path.join(input_dir, "tx_vendors_enriched.csv")
+    write_csv(enriched_csv_path, ordered_vendor_fields, enriched_rows)
+
+    workbook = Workbook()
+    vendors_sheet = workbook.active
+    vendors_sheet.title = "Vendors"
+    populate_sheet(
+        vendors_sheet,
+        ordered_vendor_fields,
+        enriched_rows,
+        table_name="Vendors_table",
+    )
+    add_overview_sheet(workbook, overview_rows, summary_rows)
     for filename, title in [
         ("tx_vendor_types.csv", "Vendor Types"),
         ("tx_service_types.csv", "Service Types"),
@@ -321,6 +446,10 @@ def main():
         os.makedirs(args.publish_dir, exist_ok=True)
         published_path = os.path.join(args.publish_dir, os.path.basename(args.output))
         shutil.copyfile(args.output, published_path)
+
+    record_count = metadata_keyed.get("record_count") or len(enriched_rows)
+    retrieved_at = metadata_keyed.get("retrieved_at_utc")
+    update_docs_index(os.path.join("docs", "index.html"), record_count, retrieved_at)
 
 
 if __name__ == "__main__":

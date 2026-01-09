@@ -46,6 +46,8 @@ def format_worksheet_as_table(
     worksheet.freeze_panes = "A2"
     _wrap_header_row(worksheet)
     _autofit_columns(worksheet)
+    if worksheet.max_row < 2:
+        return
     _apply_table_style(worksheet, requested_name=table_name)
 
 

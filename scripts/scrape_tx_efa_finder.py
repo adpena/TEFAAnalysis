@@ -36,6 +36,28 @@ def join_list(values):
     return "; ".join(str(value) for value in values)
 
 
+def normalize_list(value):
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return value
+    if isinstance(value, str):
+        return [value]
+    return []
+
+
+def cleaned_list(value):
+    items = []
+    for entry in normalize_list(value):
+        if entry is None:
+            continue
+        text = str(entry).strip()
+        if not text:
+            continue
+        items.append(text)
+    return items
+
+
 def write_csv(path, fieldnames, rows):
     with open(path, "w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=fieldnames)
@@ -181,27 +203,27 @@ def main():
             }
         )
 
-        for vendor_type in vendor.get("vendorTypes") or []:
+        for vendor_type in cleaned_list(vendor.get("vendorTypes")):
             vendor_type_rows.append(
                 {"vendor_id": vendor.get("id"), "vendor_type": vendor_type}
             )
 
-        for service_type in vendor.get("serviceType") or []:
+        for service_type in cleaned_list(vendor.get("serviceType")):
             service_type_rows.append(
                 {"vendor_id": vendor.get("id"), "service_type": service_type}
             )
 
-        for subject in vendor.get("subjectsTaught") or []:
+        for subject in cleaned_list(vendor.get("subjectsTaught")):
             subject_rows.append({"vendor_id": vendor.get("id"), "subject": subject})
 
-        for bonus_tag in vendor.get("bonusTagsRaw") or []:
+        for bonus_tag in cleaned_list(vendor.get("bonusTagsRaw")):
             bonus_tag_rows.append(
                 {"vendor_id": vendor.get("id"), "bonus_tag": bonus_tag}
             )
 
         specialties = vendor.get("specialties") or {}
         for category, values in specialties.items():
-            for value in values or []:
+            for value in cleaned_list(values):
                 specialty_rows.append(
                     {
                         "vendor_id": vendor.get("id"),
@@ -210,7 +232,7 @@ def main():
                     }
                 )
 
-        for value in financial.get("financialAccessibility") or []:
+        for value in cleaned_list(financial.get("financialAccessibility")):
             financial_access_rows.append(
                 {
                     "vendor_id": vendor.get("id"),
@@ -219,7 +241,7 @@ def main():
             )
 
         for category, values in features.items():
-            for value in values or []:
+            for value in cleaned_list(values):
                 feature_rows.append(
                     {
                         "vendor_id": vendor.get("id"),
@@ -228,7 +250,7 @@ def main():
                     }
                 )
 
-        for value in academics.get("notableAchievements") or []:
+        for value in cleaned_list(academics.get("notableAchievements")):
             academic_achievement_rows.append(
                 {
                     "vendor_id": vendor.get("id"),

@@ -2,7 +2,7 @@ key,value
 vendors_source_url,https://finder.educationfreedom.texas.gov/data/tx/vendors.json
 filter_options_url,https://finder.educationfreedom.texas.gov/data/tx/filter-options.json
 config_url,https://finder.educationfreedom.texas.gov/data/tx/config.js
-retrieved_at_utc,2026-01-09T17:35:42.163976+00:00
+retrieved_at_utc,2026-01-09T18:11:32.946882+00:00
 record_count,775
 unique_counties,91
 unique_regions,12
