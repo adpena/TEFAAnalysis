@@ -132,6 +132,8 @@ def main():
     filter_options = fetch_json(FILTER_OPTIONS_URL)
     config_raw = fetch_text(CONFIG_URL)
     config = parse_config_js(config_raw)
+    if config:
+        config["mapsApiKey"] = ""
 
     vendor_rows = []
     vendor_type_rows = []
