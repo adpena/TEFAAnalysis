@@ -3,6 +3,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Iterable, List, Tuple
 
+try:
+    from teadata.geometry import point_in_polygon as _teadata_point_in_polygon
+except Exception:
+    _teadata_point_in_polygon = None
+
 
 Point = Tuple[float, float]
 Ring = List[Point]
@@ -27,17 +32,30 @@ def _point_in_ring(point: Point, ring: Ring) -> bool:
     if len(ring) < 3:
         return False
     x, y = point
-    inside = False
+    min_x = min(px for px, _ in ring)
+    max_x = max(px for px, _ in ring)
+    min_y = min(py for _, py in ring)
+    max_y = max(py for _, py in ring)
+    if x < min_x or x > max_x or y < min_y or y > max_y:
+        return False
+
     for i in range(len(ring)):
         x1, y1 = ring[i]
         x2, y2 = ring[(i + 1) % len(ring)]
         if _point_on_segment(point, (x1, y1), (x2, y2)):
             return True
-        intersects = (y1 > y) != (y2 > y)
-        if intersects:
-            x_at_y = (x2 - x1) * (y - y1) / (y2 - y1 + 1e-12) + x1
-            if x < x_at_y:
-                inside = not inside
+
+    if _teadata_point_in_polygon is not None:
+        return bool(_teadata_point_in_polygon(point, ring))
+
+    inside = False
+    for i in range(len(ring)):
+        x1, y1 = ring[i]
+        x2, y2 = ring[(i + 1) % len(ring)]
+        if ((y1 > y) != (y2 > y)) and (
+            x < (x2 - x1) * (y - y1) / ((y2 - y1) or 1e-12) + x1
+        ):
+            inside = not inside
     return inside
 
 

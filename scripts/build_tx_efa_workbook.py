@@ -216,14 +216,47 @@ def enrich_vendors(vendor_rows, esc_index, county_index, district_index):
 
 def add_sheet_from_rows(workbook, title, fieldnames, rows):
     worksheet = workbook.create_sheet(title=title)
-    worksheet.append(fieldnames)
-    for row in rows:
-        worksheet.append([row.get(field, "") for field in fieldnames])
-    format_worksheet_as_table(worksheet, table_name=f"{title}_table")
+    populate_sheet(worksheet, fieldnames, rows, table_name=f"{title}_table")
+
+
+def format_header(label):
+    if label is None:
+        return ""
+    text = str(label)
+    if text.startswith("tea_"):
+        text = text[4:]
+    text = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", text)
+    text = text.replace("_", " ").strip()
+    if not text:
+        return ""
+    words = text.split()
+    upper_words = {
+        "api",
+        "cntyfips",
+        "esc",
+        "efa",
+        "esa",
+        "fips",
+        "geoid",
+        "geoid20",
+        "id",
+        "nces",
+        "tefa",
+        "tx",
+        "url",
+    }
+    formatted = []
+    for word in words:
+        key = word.lower()
+        if key in upper_words:
+            formatted.append(key.upper())
+        else:
+            formatted.append(word.capitalize())
+    return " ".join(formatted)
 
 
 def populate_sheet(worksheet, fieldnames, rows, table_name):
-    worksheet.append(fieldnames)
+    worksheet.append([format_header(field) for field in fieldnames])
     for row in rows:
         worksheet.append([row.get(field, "") for field in fieldnames])
     format_worksheet_as_table(worksheet, table_name=table_name)
