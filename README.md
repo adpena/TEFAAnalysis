@@ -122,3 +122,9 @@ python3 scripts/build_county_esc_mapping.py \
 The `docs/` directory contains a static download surface for the latest workbook.
 If GitHub Pages is enabled for the repository, point it at `/docs` to publish a
 simple download page.
+
+## License
+
+The source code and original documentation in this repository are released under the MIT License. See [LICENSE](LICENSE).
+
+Underlying public source data and generated workbook outputs may carry their own source or usage terms.
