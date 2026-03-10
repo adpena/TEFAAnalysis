@@ -187,28 +187,11 @@ def enrich_vendors(vendor_rows, esc_index, county_index, district_index):
                 part for part in [city, state, zipcode] if part
             )
 
-        website = (row.get("contact_website") or "").strip()
-        enriched["contact_website_display"] = (
-            website.replace("https://", "").replace("http://", "").strip("/")
-        )
-        phone = (row.get("contact_phone") or "").strip()
-        enriched["contact_phone_display"] = phone
-        enriched["contact_phone_digits"] = "".join(ch for ch in phone if ch.isdigit())
-        email = (row.get("contact_email") or "").strip()
-        enriched["contact_email_lower"] = email.lower()
-
         enriched["tea_esc_region"] = esc_props.get("ESC_REGION", "")
-        enriched["tea_esc_city"] = esc_props.get("CITY", "")
-        enriched["tea_esc_website"] = esc_props.get("WEBSITE", "")
         county_name = county_props.get("FENAME", "") or county_props.get("NAME", "")
         enriched["tea_county_name"] = county_name.title() if county_name else ""
-        enriched["tea_county_fips"] = county_props.get("FIPS", "")
-        enriched["tea_county_cntyfips"] = county_props.get("CNTYFIPS", "")
         enriched["tea_school_district_name"] = district_props.get("NAME", "")
-        enriched["tea_school_district_name20"] = district_props.get("NAME20", "")
         enriched["tea_school_district_number"] = district_props.get("DISTRICT_C", "")
-        enriched["tea_school_district_nces"] = district_props.get("NCES_DISTR", "")
-        enriched["tea_school_district_geoid20"] = district_props.get("GEOID20", "")
         enriched_rows.append(enriched)
 
     return enriched_rows, missing
@@ -349,21 +332,10 @@ def main():
     enriched_fields = list(vendors_fields) + [
         "address_formatted",
         "address_city_state_zip",
-        "contact_website_display",
-        "contact_phone_display",
-        "contact_phone_digits",
-        "contact_email_lower",
         "tea_esc_region",
-        "tea_esc_city",
-        "tea_esc_website",
         "tea_county_name",
-        "tea_county_fips",
-        "tea_county_cntyfips",
         "tea_school_district_name",
-        "tea_school_district_name20",
         "tea_school_district_number",
-        "tea_school_district_nces",
-        "tea_school_district_geoid20",
     ]
 
     metadata_fields, metadata_rows = read_csv(
@@ -392,23 +364,12 @@ def main():
         "address_state",
         "address_zipcode",
         "contact_phone",
-        "contact_phone_display",
-        "contact_phone_digits",
         "contact_email",
-        "contact_email_lower",
         "contact_website",
-        "contact_website_display",
         "tea_school_district_name",
-        "tea_school_district_name20",
         "tea_school_district_number",
-        "tea_school_district_nces",
-        "tea_school_district_geoid20",
         "tea_county_name",
-        "tea_county_fips",
-        "tea_county_cntyfips",
         "tea_esc_region",
-        "tea_esc_city",
-        "tea_esc_website",
         "address_county",
         "address_region",
         "location_lat",

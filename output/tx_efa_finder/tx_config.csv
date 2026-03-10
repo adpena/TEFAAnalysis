@@ -26,21 +26,27 @@ showSearchMarker,True
 showMapLegend,False
 defaultZoom,4
 searchZoom,10
-defaultVendorType,Schools
-enablePreKFilter,True
 showNewBadge,False
 showAltOptions,False
 enableEFABadges,False
-VENDOR_TYPE_ORDER,"[""Schools"", ""Tutoring"", ""Therapy""]"
+showOnlineSchoolsBanner,True
+VENDOR_TYPE_ORDER,"[""Schools"", ""Tutoring"", ""Therapy"", ""Enrichment"", ""Curriculum"", ""Classes"", ""Supplies"", ""Assessments""]"
+defaultVendorType,Schools
+regionEnabledVendorTypes,"[""Schools""]"
+enablePreKFilter,True
 COST_OPTIONS,[]
 vendorTypeDescriptions.Schools,Below are schools participating in the TEFA program that will accept TEFA funds for the 2026-27 school year. More schools and providers will be added regularly.
+vendorCallout.filterField,pdsesStatus
+vendorCallout.text,"Please note that all schools and vendors/service providers listed on the finder tool have successfully completed registration on the Odyssey platform. To date, only TEA's Parent Directed Special Education Services (PDSES) approved vendors have been invited to onboard, a subset of which have successfully registered. The vendor onboarding process will remain open during the full length of the program and the open vendor application will be shared soon. If you are not on the PDSES approved list, and would like to become a TEFA vendor, please indicate your interest"
+vendorCallout.linkText,here
+vendorCallout.linkUrl,https://docs.google.com/forms/d/e/1FAIpQLSeW1P-iUBqHnqz0ifis5ICio6jGf5OiCb3_nYhMrL0012SHfA/viewform
 schoolTypeLabels.efaApproved,TEFA Participating
 schoolTypeLabels.efaPending,TEFA Eligible
 logoSource,../data/tx/icon.png
 logo.href,https://comptroller.texas.gov/programs/education/esa/
 logo.altText,Texas Education Freedom Accounts
 contact.subtitle,We're here to help you navigate your school options in Texas
-contact.email,help.tx@withodyssey.com
+contact.email,outschool@withodyssey.com
 contact.airtableLinks.adminForm,https://outbridge.org/t/ifkT8QLneCus
 contact.airtableLinks.vendorForm,N/A
 contact.showAdminSection,True
